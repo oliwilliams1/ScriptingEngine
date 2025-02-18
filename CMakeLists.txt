@@ -9,4 +9,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 
 # Build the editor executable
-add_executable(SableEditor ${SOURCES})
+add_executable(SableScriptEngine ${SOURCES})
