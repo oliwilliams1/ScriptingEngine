@@ -23,6 +23,9 @@ enum class Inst
     MulFloat = 0x06,
     DivFloat = 0x07,
 
+    CallFuncInt = 0x08,
+    CallFuncFloat = 0x09,
+
     Return = 0xFE,
     Halt = 0xFF
 };
@@ -36,6 +39,7 @@ struct Variable
 struct Function
 {
     size_t returnAddress;
+    size_t funcAddress;
     Type returnType;
     std::vector<uint8_t> code;
     std::vector<uint32_t> functionScope;
@@ -48,14 +52,15 @@ public:
     VM();
     ~VM();
 
-    size_t LoadFunction(const Function& func);
+    void LoadFunction(const Function& func);
     void RunFunction(size_t funcIndex);
     uint32_t GetValueAt(size_t offset) const;
 
     std::string GetDisassembly();
+    void DumpMemory();
 
 private:
-    std::array<uint32_t, 128> memory = { 0 };
+    std::array<uint32_t, 16> memory = { 0 };
     std::vector<Function> functions;
     size_t pc;
 

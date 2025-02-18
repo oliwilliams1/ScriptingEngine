@@ -1,8 +1,8 @@
 #include "VM.h"
 #include <unordered_map>
+#include <iomanip>
 
-std::unordered_map<Inst, std::string> instToStringMap =
-{
+std::unordered_map<Inst, std::string> instToStringMap = {
     {Inst::AddInt, "AddInt"},
     {Inst::SubInt, "SubInt"},
     {Inst::MulInt, "MulInt"},
@@ -21,10 +21,14 @@ VM::VM() : pc(0) {}
 
 VM::~VM() {}
 
-size_t VM::LoadFunction(const Function& func)
+void VM::LoadFunction(const Function& func)
 {
-    functions.push_back(func);
-    return functions.size() - 1;
+    if (func.funcAddress >= functions.size())
+    {
+        functions.resize(func.funcAddress + 1);
+    }
+
+    functions[func.funcAddress] = func;
 }
 
 void VM::RunFunction(size_t funcIndex)
@@ -255,4 +259,27 @@ std::string VM::PrintOperands(const Function& func, size_t& instIndex)
     std::string operands = "\t\t" + std::to_string(func.code[instIndex]) + ", " + std::to_string(func.code[instIndex + 1]) + ", " + std::to_string(func.code[instIndex + 2]);
     instIndex += 3; // Move past all operands
     return operands;
+}
+
+void VM::DumpMemory()
+{
+    std::cout << "\nMem dump\n";
+    std::cout << "Loc  | hex      | int        | float\n";
+    std::cout << "---- | -------- | ---------- | ---------------\n";
+    for (size_t i = 0; i < memory.size(); i ++)
+    {
+        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0')
+            << i << " | ";
+
+        std::cout << std::hex << std::setw(8) << std::setfill('0')
+            << memory[i] << " | ";
+
+        std::cout << std::dec << std::setw(10) << std::setfill(' ')
+            << *(int *) & memory[i] << " | ";
+
+        std::cout << std::dec << std::setw(15) << std::setfill(' ')
+            << *(float *)&memory[i] << std::endl;
+    }
+
+    std::cout << std::dec;
 }

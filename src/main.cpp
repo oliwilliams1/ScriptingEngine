@@ -7,7 +7,7 @@ int main()
     Function mainFunc;
     mainFunc.returnAddress = 0;
     mainFunc.returnType = Type::Float;
-
+    mainFunc.funcAddress = 0;
     mainFunc.functionScope.resize(3);
 
     float var1 = 2.0f;
@@ -27,16 +27,18 @@ int main()
         static_cast<uint8_t>(Inst::Halt)
     };
 
-    size_t funcIndex = vm.LoadFunction(mainFunc);
-    vm.RunFunction(funcIndex);
+    vm.LoadFunction(mainFunc);
+    vm.RunFunction(mainFunc.funcAddress);
 
     std::cout << vm.GetDisassembly() << std::endl;
 
     // For int
-    //std::cout << "Result: " << vm.GetValueAt(0) << std::endl;
+    // std::cout << "Result: " << vm.GetValueAt(0) << std::endl;
 
     // For float
     uint32_t result = vm.GetValueAt(0);
     std::cout << "Result: " << * (float*) &result << std::endl;
+
+    vm.DumpMemory();
     return 0;
 }
