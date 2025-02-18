@@ -14,7 +14,11 @@ enum class Type
 enum class Inst
 {
     AddInt = 0x00,
-    Return = 0x01,
+    SubInt = 0x01,
+    MulInt = 0x02,
+    DivInt = 0x03,
+
+    Return = 0x0F,
     Halt = 0xFF
 };
 
@@ -39,7 +43,7 @@ public:
     VM();
     ~VM();
 
-    void LoadFunction(const Function& func);
+    size_t LoadFunction(const Function& func);
     void RunFunction(size_t funcIndex);
     int32_t GetValueAt(size_t offset) const;
 
@@ -49,4 +53,8 @@ private:
     std::array<uint32_t, 128> memory = { 0 };
     std::vector<Function> functions;
     size_t pc;
+
+    void PerformArithmetic(Inst instruction, const Function& func);
+
+    std::string PrintOperands(const Function& func, size_t& instIndex);
 };

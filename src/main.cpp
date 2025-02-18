@@ -10,23 +10,23 @@ int main()
 
     mainFunc.functionScope.resize(2);
 
-    mainFunc.functionScope[0] = 2;
-    mainFunc.functionScope[1] = 4;
+    mainFunc.functionScope[0] = 4;
+    mainFunc.functionScope[1] = 2;
 
     mainFunc.variableTable.push_back({ Type::Int, 0 });
     mainFunc.variableTable.push_back({ Type::Int, 1 });
 
     mainFunc.code = {
-        static_cast<uint8_t>(Inst::AddInt),
+        static_cast<uint8_t>(Inst::DivInt),
         0,
         1,
         static_cast<uint8_t>(Inst::Return),
         static_cast<uint8_t>(Inst::Halt)
     };
 
-    vm.LoadFunction(mainFunc);
+    size_t funcIndex = vm.LoadFunction(mainFunc);
 
-    vm.RunFunction(0);
+    vm.RunFunction(funcIndex);
 
     std::cout << vm.GetDisassembly() << std::endl;
 
