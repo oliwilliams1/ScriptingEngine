@@ -29,6 +29,20 @@ void VM::LoadFunction(const Function& func)
     }
 
     functions[func.funcAddress] = func;
+
+    switch (func.returnType)
+    {
+    case Type::Int:
+        memUsed++;
+        break;
+
+    case Type::Float:
+        memUsed++;
+        break;
+
+    default:
+        std::cerr << "nah bro you can use whatever that is for function return type line:" << __LINE__ << std::endl;
+    }
 }
 
 void VM::RunFunction(size_t funcIndex)
