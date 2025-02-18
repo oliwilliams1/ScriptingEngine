@@ -1,4 +1,3 @@
-#pragma once
 #include <vector>
 #include <cstdint>
 #include <array>
@@ -30,7 +29,7 @@ struct Function
     size_t returnAddress;
     Type returnType;
     std::vector<uint8_t> code;
-    std::vector<uint8_t> functionScope;
+    std::vector<uint32_t> functionScope;
     std::vector<Variable> variableTable;
 };
 
@@ -47,7 +46,7 @@ public:
     std::string GetDisassembly();
 
 private:
-    std::array<uint8_t, 128> memory = { 0x00 };
+    std::array<uint32_t, 128> memory = { 0 };
     std::vector<Function> functions;
     size_t pc;
 };

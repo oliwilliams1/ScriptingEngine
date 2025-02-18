@@ -4,26 +4,33 @@ int main()
 {
     VM vm;
 
-    Function main;
-    main.returnAddress = 0;
-    main.returnType = Type::Int;
+    Function mainFunc;
+    mainFunc.returnAddress = 0;
+    mainFunc.returnType = Type::Int;
 
-    
+    mainFunc.functionScope.resize(2);
 
-    main.code = {
-        static_cast<uint8_t>(Inst::AddInt), 0, 1,
+    mainFunc.functionScope[0] = 2;
+    mainFunc.functionScope[1] = 4;
+
+    mainFunc.variableTable.push_back({ Type::Int, 0 });
+    mainFunc.variableTable.push_back({ Type::Int, 1 });
+
+    mainFunc.code = {
+        static_cast<uint8_t>(Inst::AddInt),
+        0,
+        1,
         static_cast<uint8_t>(Inst::Return),
         static_cast<uint8_t>(Inst::Halt)
     };
 
-    vm.LoadFunction(main);
+    vm.LoadFunction(mainFunc);
 
-    // Run main
     vm.RunFunction(0);
 
     std::cout << vm.GetDisassembly() << std::endl;
 
-    std::cout << "main() result: " << vm.GetValueAt(main.returnAddress) << std::endl;
+    std::cout << "main() result: " << vm.GetValueAt(mainFunc.returnAddress) << std::endl;
 
     return 0;
 }
