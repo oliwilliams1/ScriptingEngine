@@ -18,7 +18,12 @@ enum class Inst
     MulInt = 0x02,
     DivInt = 0x03,
 
-    Return = 0x0F,
+    AddFloat = 0x04,
+    SubFloat = 0x05,
+    MulFloat = 0x06,
+    DivFloat = 0x07,
+
+    Return = 0xFE,
     Halt = 0xFF
 };
 
@@ -45,7 +50,7 @@ public:
 
     size_t LoadFunction(const Function& func);
     void RunFunction(size_t funcIndex);
-    int32_t GetValueAt(size_t offset) const;
+    uint32_t GetValueAt(size_t offset) const;
 
     std::string GetDisassembly();
 
@@ -54,7 +59,7 @@ private:
     std::vector<Function> functions;
     size_t pc;
 
-    void PerformArithmetic(Inst instruction, const Function& func);
-
+    void PerformIntArithmetic(Inst instruction, Function& func);
+    void PerformFloatArithmetic(Inst instruction, Function& func);
     std::string PrintOperands(const Function& func, size_t& instIndex);
 };

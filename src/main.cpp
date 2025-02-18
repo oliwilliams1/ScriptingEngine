@@ -6,31 +6,37 @@ int main()
 
     Function mainFunc;
     mainFunc.returnAddress = 0;
-    mainFunc.returnType = Type::Int;
+    mainFunc.returnType = Type::Float;
 
-    mainFunc.functionScope.resize(2);
+    mainFunc.functionScope.resize(3);
 
-    mainFunc.functionScope[0] = 4;
-    mainFunc.functionScope[1] = 2;
+    float var1 = 2.0f;
+    float var2 = 4.0f;
+    float var3 = 0.0f;
+    mainFunc.functionScope[0] = *(uint32_t*) &var1;
+    mainFunc.functionScope[1] = *(uint32_t*) &var2;
+    mainFunc.functionScope[2] = *(uint32_t*) &var3;
 
-    mainFunc.variableTable.push_back({ Type::Int, 0 });
-    mainFunc.variableTable.push_back({ Type::Int, 1 });
+    mainFunc.variableTable.push_back({ Type::Float, 0});
+    mainFunc.variableTable.push_back({ Type::Float, 1 });
+    mainFunc.variableTable.push_back({ Type::Float, 2 });
 
     mainFunc.code = {
-        static_cast<uint8_t>(Inst::DivInt),
-        0,
-        1,
-        static_cast<uint8_t>(Inst::Return),
+        static_cast<uint8_t>(Inst::DivFloat), 0, 1, 2,
+        static_cast<uint8_t>(Inst::Return), 2,
         static_cast<uint8_t>(Inst::Halt)
     };
 
     size_t funcIndex = vm.LoadFunction(mainFunc);
-
     vm.RunFunction(funcIndex);
 
     std::cout << vm.GetDisassembly() << std::endl;
 
-    std::cout << "main() result: " << vm.GetValueAt(mainFunc.returnAddress) << std::endl;
+    // For int
+    //std::cout << "Result: " << vm.GetValueAt(0) << std::endl;
 
+    // For float
+    uint32_t result = vm.GetValueAt(0);
+    std::cout << "Result: " << * (float*) &result << std::endl;
     return 0;
 }
