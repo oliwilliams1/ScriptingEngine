@@ -1,5 +1,5 @@
 #include "VM.h"
-
+#include "Compiler.h"
 /*
 void addOtherFunc(VM& vm)
 {
@@ -59,7 +59,7 @@ int main()
     vm.DumpMemory();
     return 0;
 }
-*/
+
 
 void addOtherFunc(VM& vm)
 {
@@ -117,5 +117,12 @@ int main()
     std::cout << "main() result: " << *(float*)&result << std::endl;
 
     vm.DumpMemory();
+    return 0;
+}
+*/
+
+int main()
+{
+    std::cout << cleanUpFile("../playtime/script.sbscript") << std::endl;
     return 0;
 }
