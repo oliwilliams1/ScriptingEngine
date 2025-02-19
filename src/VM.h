@@ -61,11 +61,11 @@ public:
 
 private:
     size_t memUsed = 0;
-    std::array<uint32_t, 16> memory = { 0 };
+    std::array<uint32_t, 4> memory = { 0 };
     std::vector<Function> functions;
     size_t pc;
 
     void PerformIntArithmetic(Inst instruction, Function& func);
     void PerformFloatArithmetic(Inst instruction, Function& func);
-    std::string PrintOperands(const Function& func, size_t& instIndex);
+    std::string PrintOperands(const Function& func, size_t& instIndex, size_t operandsCount);
 };

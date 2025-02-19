@@ -13,6 +13,9 @@ std::unordered_map<Inst, std::string> instToStringMap = {
     {Inst::MulFloat, "MulFloat"},
     {Inst::DivFloat, "DivFloat"},
 
+    {Inst::CallFuncInt, "CallFuncInt"},
+	{Inst::CallFuncFloat, "CallFuncFloat"},
+
     {Inst::Return, "Return"},
     {Inst::Halt, "Halt"}
 };
@@ -88,6 +91,34 @@ void VM::RunFunction(size_t funcIndex)
             PerformFloatArithmetic(static_cast<Inst>(instruction), func);
             break;
 
+        case Inst::CallFuncInt:
+        {
+            size_t funcIndex = func.code[pc++];
+            size_t returnIndex = func.code[pc++];
+            size_t currPc = pc;
+
+            RunFunction(funcIndex);
+            
+            // Continue where we left off from, SO HARD TO FIND
+            pc = currPc;
+            func.functionScope[returnIndex] = memory[functions[funcIndex].returnAddress];
+            break;
+        }
+
+        case Inst::CallFuncFloat:
+        {
+            size_t funcIndex = func.code[pc++];
+            size_t returnIndex = func.code[pc++];
+            size_t currPc = pc;
+
+            RunFunction(funcIndex);
+
+            // Continue where we left off from, SO HARD TO FIND
+            pc = currPc;
+            func.functionScope[returnIndex] = memory[functions[funcIndex].returnAddress];
+            break;
+        }
+
         case Inst::Return:
         {
             memory[func.returnAddress] = func.functionScope[func.code[pc++]];
@@ -96,6 +127,7 @@ void VM::RunFunction(size_t funcIndex)
 
         case Inst::Halt:
             return;
+
         default:
             std::cerr << "Unknown instruction! line: " << __LINE__ << std::endl;
             return;
@@ -191,19 +223,18 @@ std::string VM::GetDisassembly()
     for (size_t funcIndex = 0; funcIndex < functions.size(); ++funcIndex)
     {
         const Function& function = functions[funcIndex];
-        ss << "Function " << funcIndex << ":\n";
+        ss << "  ----------------------------------  \nFunction " << funcIndex << ":\n";
         ss << "  Return Address: " << function.returnAddress << "\n";
         ss << "  Return Type: " << (function.returnType == Type::Int ? "int" : "float") << "\n";
 
         ss << "\n  Variables:\n";
-        ss << "    Variable Count: " << function.variableTable.size() << "\n";
-        for (size_t varIndex = 0; varIndex < function.variableTable.size(); ++varIndex)
+        ss << "    Variable Count: " << function.functionScope.size() << "\n";
+        for (size_t varIndex = 0; varIndex < function.functionScope.size(); ++varIndex)
         {
-            const Variable& variable = function.variableTable[varIndex];
-            uint32_t value = function.functionScope[variable.offset];
+            uint32_t value = function.functionScope[varIndex];
 
             ss << "    Var " << varIndex << ": ";
-            ss << (variable.type == Type::Int ? "int" : "float") << " = " << (variable.type == Type::Int ? value : *(float*)&value) << "\n"; // Print variable values
+            ss << value << std::endl;
         }
 
         ss << "\n  Code:\n";
@@ -217,40 +248,48 @@ std::string VM::GetDisassembly()
             switch (static_cast<Inst>(instruction))
             {
             case Inst::AddInt:
-                ss << PrintOperands(function, instructionIndex);
+                ss << PrintOperands(function, instructionIndex, 3);
                 break;
 
             case Inst::SubInt:
-                ss << PrintOperands(function, instructionIndex);
+                ss << PrintOperands(function, instructionIndex, 3);
                 break;
 
             case Inst::MulInt:
-                ss << PrintOperands(function, instructionIndex);
+                ss << PrintOperands(function, instructionIndex, 3);
                 break;
 
             case Inst::DivInt:
-                ss << PrintOperands(function, instructionIndex);
+                ss << PrintOperands(function, instructionIndex, 3);
                 break;
 
             case Inst::AddFloat:
-                ss << PrintOperands(function, instructionIndex);
+                ss << PrintOperands(function, instructionIndex, 3);
                 break;
 
             case Inst::SubFloat:
-                ss << PrintOperands(function, instructionIndex);
+                ss << PrintOperands(function, instructionIndex, 3);
                 break;
 
             case Inst::MulFloat:
-                ss << PrintOperands(function, instructionIndex);
+                ss << PrintOperands(function, instructionIndex, 3);
                 break;
 
             case Inst::DivFloat:
-                ss << PrintOperands(function, instructionIndex);
+                ss << PrintOperands(function, instructionIndex, 3);
                 break;
 
             case Inst::Return:
                 ss << "\t\t" << function.returnAddress;
                 instructionIndex += 1;
+                break;
+
+            case Inst::CallFuncInt:
+                ss << PrintOperands(function, instructionIndex, 2);
+                break;
+
+            case Inst::CallFuncFloat:
+                ss << PrintOperands(function, instructionIndex, 2);
                 break;
 
             case Inst::Halt:
@@ -268,10 +307,15 @@ std::string VM::GetDisassembly()
     return ss.str();
 }
 
-std::string VM::PrintOperands(const Function& func, size_t& instIndex)
+std::string VM::PrintOperands(const Function& func, size_t& instIndex, size_t operandsCount)
 {
-    std::string operands = "\t\t" + std::to_string(func.code[instIndex]) + ", " + std::to_string(func.code[instIndex + 1]) + ", " + std::to_string(func.code[instIndex + 2]);
-    instIndex += 3; // Move past all operands
+    std::string operands = "\t\t";
+    for (int i = 0; i < operandsCount; i++)
+    {
+        operands += (i == 0 ? "" : ", ") + std::to_string(func.code[instIndex + i]);
+    }
+
+    instIndex += operandsCount;
     return operands;
 }
 
