@@ -123,6 +123,13 @@ int main()
 
 int main()
 {
-    std::cout << cleanUpFile("../playtime/script.sbscript") << std::endl;
+    Parser parser;
+
+    parser.CleanUpFile("../playtime/script.sbscript");
+
+    parser.Tokenize();
+
+	parser.Compile();
+
     return 0;
 }

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <cstdint>
 #include <array>
@@ -43,7 +45,6 @@ struct Function
     Type returnType;
     std::vector<uint8_t> code;
     std::vector<uint32_t> functionScope;
-    std::vector<Variable> variableTable;
 };
 
 class VM
