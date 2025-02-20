@@ -126,10 +126,29 @@ int main()
     Parser parser;
 
     parser.CleanUpFile("../playtime/script.sbscript");
-
     parser.Tokenize();
-
 	parser.Compile();
+
+    VM vm;
+
+    for (const Function& func : parser.functions)
+    {
+        vm.LoadFunction(func);
+    }
+    
+    std::cout << vm.GetDisassembly() << std::endl;
+    vm.RunFunction(0);
+
+    uint32_t result = vm.GetValueAt(0);
+    if (vm.functions[0].returnType == Type::Int)
+    {
+        std::cout << "main() result: " << *(int*)&result << std::endl;
+    }
+    else
+    {
+        std::cout << "main() result: " << *(float*)&result << std::endl;
+    }
+
 
     return 0;
 }

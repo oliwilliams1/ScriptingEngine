@@ -19,10 +19,10 @@ public:
 
 	void Compile();
 
+	std::vector<Function> functions;
 private:
 	void CompileFuncBody(int& i);
 
-	std::vector<Function> functions;
 
 	// std::map<std::string, Function> functionsMap;
 

@@ -1,5 +1,5 @@
 #include "Compiler.h"
-#include "exprtk.hpp"
+#include "parserWrapper.h"
 
 void Parser::CleanUpFile(const std::string& path)
 {
@@ -115,6 +115,8 @@ void Parser::CompileFuncBody(int& i)
 
 	std::map<std::string, std::pair<uint8_t, std::string>> variableMap;
 
+	static int index = 0;
+
 	for (int j = 0; j < variableDeclarations.size(); j++)
 	{
 		std::string& line = variableDeclarations[j];
@@ -132,18 +134,17 @@ void Parser::CompileFuncBody(int& i)
 		std::string variableValue = line.substr(valueStart, valueEnd - valueStart);
 		variableValue.erase(variableValue.find_last_not_of(' ') + 1);
 
-		variableMap[variableName] = {static_cast<uint8_t>(currentType), variableValue};
+		variableMap[variableName] = { index, variableValue};
+		index++;
 	}
+
+	currentFunction.functionScope.resize(variableMap.size());
 
 	for (const auto& pair : variableMap)
 	{
 		const std::string& varName = pair.first;
 		uint8_t varIndex = pair.second.first;
 		const std::string& varValue = pair.second.second;
-
-		std::cout << "Variable Name: " << varName
-			<< ", Index: " << static_cast<int>(varIndex)
-			<< ", Value: " << varValue << std::endl;
 
 		bool containsAlphabetic = false;
 		for (char c : varValue) {
@@ -157,18 +158,39 @@ void Parser::CompileFuncBody(int& i)
 			std::cout << "varValue contains alphabetic characters." << std::endl;
 		}
 		else {
-			std::string expression = varValue;
-			exprtk::parser<double> parser;
-			exprtk::expression<double> expr;
+			float res = parseExpression(varValue);
 
-			if (parser.compile(expression, expr))
+			if (currentType == Type::Int)
 			{
-				double result = expr.value();
-				std::cout << "Result: " << result << std::endl;
+				int ires = (int)res;
+				currentFunction.functionScope[varIndex] = *(uint32_t*) &ires;
 			}
+			else // float
+			{
+				currentFunction.functionScope[varIndex] = *(uint32_t*) &res;
+			}
+		}
+	}
+
+	for (const std::string& line : lines)
+	{
+		if (line.substr(0, 6) == "return")
+		{
+			std::string variableName = line.substr(6);
+
+			variableName.erase(0, variableName.find_first_not_of(' '));
+
+			variableName.erase(variableName.find_last_not_of(' ') + 1);
+
+			currentFunction.code.push_back((uint8_t)Inst::Return);
+
+			if (variableMap.find(variableName) != variableMap.end())
+			{
+				currentFunction.code.push_back(variableMap[variableName].first);
+			} 
 			else
 			{
-				std::cerr << "Error: " << parser.error() << std::endl;
+				std::cout << "unknown return variable name: " << variableName << std::endl;
 			}
 		}
 	}

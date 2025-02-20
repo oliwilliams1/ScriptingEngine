@@ -60,10 +60,11 @@ public:
     std::string GetDisassembly();
     void DumpMemory();
 
+    std::vector<Function> functions;
+
 private:
     size_t memUsed = 0;
     std::array<uint32_t, 4> memory = { 0 };
-    std::vector<Function> functions;
     size_t pc;
 
     void PerformIntArithmetic(Inst instruction, Function& func);
