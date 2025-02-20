@@ -115,7 +115,7 @@ void Parser::CompileFuncBody(int& i)
 
 	std::map<std::string, std::pair<uint8_t, std::string>> variableMap;
 
-	static int index = 0;
+	int index = 0;
 
 	for (int j = 0; j < variableDeclarations.size(); j++)
 	{
@@ -224,6 +224,8 @@ void Parser::Compile()
 
 			CompileFuncBody(i);
 			functions.push_back(currentFunction);
+			currentFunction = Function();
+			inFunc = false;
 		}
 		lastToken = token;
 	}

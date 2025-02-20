@@ -4,3 +4,9 @@ int main()
     int b = 2;
     return a;
 }
+
+int somewthing()
+{
+    int a = 40 * 20;
+    return a;
+}

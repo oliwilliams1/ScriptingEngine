@@ -137,9 +137,9 @@ void VM::RunFunction(size_t funcIndex)
 
 void VM::PerformIntArithmetic(Inst instruction, Function& func)
 {
-    size_t varIndexA = func.code[pc++];
-    size_t varIndexB = func.code[pc++];
-    size_t resultIndex = func.code[pc++];
+    uint8_t varIndexA = func.code[pc++];
+    uint8_t varIndexB = func.code[pc++];
+    uint8_t resultIndex = func.code[pc++];
 
     int32_t a = static_cast<uint32_t>(func.functionScope[varIndexA]);
     int32_t b = static_cast<uint32_t>(func.functionScope[varIndexB]);
