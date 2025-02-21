@@ -80,6 +80,26 @@ void Parser::trimLines(std::stringstream& ss, std::vector<std::string>& lines)
 	}
 }
 
+void Parser::stripString(std::string& str)
+{
+	str.erase(str.find_last_not_of(' ') + 1);
+	str.erase(0, str.find_first_not_of(' '));
+}
+
+void Parser::removeVariableType(std::string& str)
+{
+	std::string types[] = { "int", "float" };
+
+	for (const std::string& type : types) 
+	{
+		size_t pos;
+		while ((pos = str.find(type)) != std::string::npos) 
+		{
+			str.erase(pos, type.length());
+		}
+	}	
+}
+
 void Parser::variableRealization(std::vector<std::string>& lines, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap)
 {
 	std::vector<std::string> variableDeclarations;
@@ -175,9 +195,32 @@ void Parser::tokenizeFuncBody(std::stringstream& stream, int& i)
 	i = maxI + 1;
 }
 
-void compileLine(const std::string& line, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap)
+void Parser::evaluateExpression(std::string& expression, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap)
 {
+	std::cout << "not implemented, line: " << __LINE__ << std::endl;
+}
 
+void Parser::compileLine(const std::string& line, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap)
+{
+	if (line.find('=') == std::string::npos)
+	{
+		std::cout << "not compiling your stupid line: " << line << std::endl;
+		return;
+	}
+
+	std::string LHS = line.substr(0, line.find('='));
+	removeVariableType(LHS);
+	stripString(LHS);
+
+	if (variableMap.find(LHS) == variableMap.end())
+	{
+		std::cout << "LHS of line not a variable: " << line << std::endl;
+		return;
+	}
+
+	std::string RHS = line.substr(line.find('=') + 1);
+	
+	evaluateExpression(RHS, variableMap);
 }
 
 void Parser::CompileFuncBody(int& i)

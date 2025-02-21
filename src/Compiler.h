@@ -9,8 +9,6 @@
 #include <unordered_map>
 #include "VM.h"
 
-std::string cleanUpFile(const std::string& path);
-
 class Parser
 {
 public:
@@ -23,7 +21,7 @@ public:
 private:
 	void CompileFuncBody(int& i);
 
-	// std::map<std::string, Function> functionsMap;
+	// std::unoredered_+map<std::string, Function> functionsMap;
 
 	std::string currentExpression;
 
@@ -42,4 +40,7 @@ private:
 	void variableRealization(std::vector<std::string>& lines, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap);
 	void tokenizeFuncBody(std::stringstream& stream, int& i);
 	void compileLine(const std::string& line, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap);
+	void stripString(std::string& str);
+	void removeVariableType(std::string& str);
+	void evaluateExpression(std::string& expression, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap);
 };
