@@ -15,21 +15,23 @@ enum class Type
 
 enum class Inst
 {
-    AddInt = 0x00,
-    SubInt = 0x01,
-    MulInt = 0x02,
-    DivInt = 0x03,
+    AddInt = 0x0000,
+    SubInt = 0x0001,
+    MulInt = 0x0002,
+    DivInt = 0x0003,
 
-    AddFloat = 0x04,
-    SubFloat = 0x05,
-    MulFloat = 0x06,
-    DivFloat = 0x07,
+    AddFloat = 0x0004,
+    SubFloat = 0x0005,
+    MulFloat = 0x0006,
+    DivFloat = 0x0007,
 
-    CallFuncInt = 0x08,
-    CallFuncFloat = 0x09,
+    CallFuncInt = 0x0008,
+    CallFuncFloat = 0x0009,
 
-    Return = 0xFE,
-    Halt = 0xFF
+    SetRegister = 0x000A,
+
+    Return = 0xFFFE,
+    Halt = 0xFFFF
 };
 
 struct Variable
@@ -43,7 +45,7 @@ struct Function
     size_t returnAddress;
     size_t funcAddress;
     Type returnType;
-    std::vector<uint8_t> code;
+    std::vector<uint16_t> code;
     std::vector<uint32_t> functionScope;
 };
 
@@ -64,8 +66,10 @@ public:
 
 private:
     size_t memUsed = 0;
-    std::array<uint32_t, 4> memory = { 0 };
+    std::array<uint32_t, 16> memory = { 0 };
     size_t pc;
+
+    std::array<uint32_t, 16> registers = { 0 };
 
     void PerformIntArithmetic(Inst instruction, Function& func);
     void PerformFloatArithmetic(Inst instruction, Function& func);

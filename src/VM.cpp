@@ -16,6 +16,8 @@ std::unordered_map<Inst, std::string> instToStringMap = {
     {Inst::CallFuncInt, "CallFuncInt"},
 	{Inst::CallFuncFloat, "CallFuncFloat"},
 
+    {Inst::SetRegister, "SetRegister"},
+
     {Inst::Return, "Return"},
     {Inst::Halt, "Halt"}
 };
@@ -56,7 +58,7 @@ void VM::RunFunction(size_t funcIndex)
 
     while (pc < code.size())
     {
-        uint8_t instruction = code[pc++];
+        uint16_t instruction = code[pc++];
         switch (static_cast<Inst>(instruction))
         {
         case Inst::AddInt:
@@ -93,9 +95,9 @@ void VM::RunFunction(size_t funcIndex)
 
         case Inst::CallFuncInt:
         {
-            size_t funcIndex = func.code[pc++];
-            size_t returnIndex = func.code[pc++];
-            size_t currPc = pc;
+            uint16_t funcIndex = func.code[pc++];
+            uint16_t returnIndex = func.code[pc++];
+            uint16_t currPc = pc;
 
             RunFunction(funcIndex);
             
@@ -107,9 +109,9 @@ void VM::RunFunction(size_t funcIndex)
 
         case Inst::CallFuncFloat:
         {
-            size_t funcIndex = func.code[pc++];
-            size_t returnIndex = func.code[pc++];
-            size_t currPc = pc;
+            uint16_t funcIndex = func.code[pc++];
+            uint16_t returnIndex = func.code[pc++];
+            uint16_t currPc = pc;
 
             RunFunction(funcIndex);
 
@@ -117,6 +119,16 @@ void VM::RunFunction(size_t funcIndex)
             pc = currPc;
             func.functionScope[returnIndex] = memory[functions[funcIndex].returnAddress];
             break;
+        }
+
+        case Inst::SetRegister:
+        {
+            uint16_t regAddress = func.code[pc++];
+            uint16_t p1 = func.code[pc++];
+            uint16_t p2 = func.code[pc++];            
+
+            registers[regAddress] = ((uint32_t)p1 << 16) | (uint32_t)p2;
+			break;
         }
 
         case Inst::Return:
@@ -137,9 +149,9 @@ void VM::RunFunction(size_t funcIndex)
 
 void VM::PerformIntArithmetic(Inst instruction, Function& func)
 {
-    uint8_t varIndexA = func.code[pc++];
-    uint8_t varIndexB = func.code[pc++];
-    uint8_t resultIndex = func.code[pc++];
+    uint16_t varIndexA = func.code[pc++];
+    uint16_t varIndexB = func.code[pc++];
+    uint16_t resultIndex = func.code[pc++];
 
     int32_t a = static_cast<uint32_t>(func.functionScope[varIndexA]);
     int32_t b = static_cast<uint32_t>(func.functionScope[varIndexB]);
@@ -174,9 +186,9 @@ void VM::PerformIntArithmetic(Inst instruction, Function& func)
 
 void VM::PerformFloatArithmetic(Inst instruction, Function& func) 
 {
-    size_t varIndexA = func.code[pc++];
-    size_t varIndexB = func.code[pc++];
-    size_t resultIndex = func.code[pc++];
+    uint16_t varIndexA = func.code[pc++];
+    uint16_t varIndexB = func.code[pc++];
+    uint16_t resultIndex = func.code[pc++];
 
     float a = * (float*) &func.functionScope[varIndexA];
     float b = * (float*) &func.functionScope[varIndexB];
@@ -242,7 +254,7 @@ std::string VM::GetDisassembly()
         size_t instructionIndex = 0;
         while (instructionIndex < function.code.size())
         {
-            uint8_t instruction = function.code[instructionIndex++];
+            uint16_t instruction = function.code[instructionIndex++];
             ss << "    " << instToStringMap[(Inst)instruction];
 
             switch (static_cast<Inst>(instruction))
@@ -292,6 +304,10 @@ std::string VM::GetDisassembly()
                 ss << PrintOperands(function, instructionIndex, 2);
                 break;
 
+            case Inst::SetRegister:
+				ss << PrintOperands(function, instructionIndex, 3);
+				break;
+
             case Inst::Halt:
                 break;
             default:
@@ -339,5 +355,22 @@ void VM::DumpMemory()
             << *(float *)&memory[i] << std::endl;
     }
 
+    std::cout << "\nRegister\n";
+    for (size_t i = 0; i < registers.size(); i++)
+	{
+        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0')
+            << i << " | ";
+
+        std::cout << std::hex << std::setw(8) << std::setfill('0')
+            << registers[i] << " | ";
+
+        std::cout << std::dec << std::setw(10) << std::setfill(' ')
+            << *(int*)&registers[i] << " | ";
+
+        std::cout << std::dec << std::setw(15) << std::setfill(' ')
+            << *(float*)&registers[i] << std::endl;
+	}
+
     std::cout << std::dec;
+
 }

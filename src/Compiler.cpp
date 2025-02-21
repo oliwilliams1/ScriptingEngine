@@ -213,7 +213,7 @@ void Parser::Compile()
 			{
 				currentFunction.returnAddress = 0;
 				currentFunction.funcAddress   = 0;
-			} 
+			}
 			else
 			{
 				currentFunction.returnAddress = (latestFuncAddress == 0 ? 1 : latestFuncAddress);
