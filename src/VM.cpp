@@ -115,7 +115,6 @@ void VM::RunFunction(size_t funcIndex)
 
             RunFunction(funcIndex);
 
-            // Continue where we left off from, SO HARD TO FIND
             pc = currPc;
             func.functionScope[returnIndex] = memory[functions[funcIndex].returnAddress];
             break;
@@ -153,8 +152,27 @@ void VM::PerformIntArithmetic(Inst instruction, Function& func)
     uint16_t varIndexB = func.code[pc++];
     uint16_t resultIndex = func.code[pc++];
 
-    int32_t a = static_cast<uint32_t>(func.functionScope[varIndexA]);
-    int32_t b = static_cast<uint32_t>(func.functionScope[varIndexB]);
+    int32_t a;
+    int32_t b;
+
+    if (varIndexA >= 65535 - regSize)
+    {
+        a = registers[varIndexA - 65535];
+    }
+    else
+    {
+        a = static_cast<uint32_t>(func.functionScope[varIndexA]);
+    }
+
+    if (varIndexB >= 65535 - regSize)
+    {
+        b = registers[varIndexB - 65535];
+    }
+    else
+    {
+        b = static_cast<uint32_t>(func.functionScope[varIndexB]);
+    }
+
     int32_t result = 0;
 
     switch (instruction)
@@ -180,18 +198,43 @@ void VM::PerformIntArithmetic(Inst instruction, Function& func)
         break;
     }
 
-    // Store result to the specified variable in functionScope
-    func.functionScope[resultIndex] = static_cast<uint32_t>(result);
+    if (resultIndex >= 65535 - regSize)
+    {
+        registers[resultIndex - 65535] = static_cast<uint32_t>(result);
+    }
+    else
+    {
+        func.functionScope[resultIndex] = static_cast<uint32_t>(result);
+    }
 }
 
-void VM::PerformFloatArithmetic(Inst instruction, Function& func) 
+void VM::PerformFloatArithmetic(Inst instruction, Function& func)
 {
     uint16_t varIndexA = func.code[pc++];
     uint16_t varIndexB = func.code[pc++];
     uint16_t resultIndex = func.code[pc++];
 
-    float a = * (float*) &func.functionScope[varIndexA];
-    float b = * (float*) &func.functionScope[varIndexB];
+    float a;
+    float b;
+
+    if (varIndexA >= 65535 - regSize)
+    {
+        a = *(float*)&registers[varIndexA - 65535];
+    }
+    else
+    {
+        a = *(float*)&func.functionScope[varIndexA];
+    }
+
+    if (varIndexB >= 65535 - regSize)
+    {
+        b = *(float*)&registers[varIndexB - 65535];
+    }
+    else
+    {
+        b = *(float*)&func.functionScope[varIndexB];
+    }
+
     float result = 0;
 
     switch (instruction)
@@ -217,8 +260,14 @@ void VM::PerformFloatArithmetic(Inst instruction, Function& func)
         break;
     }
 
-    // Store result to the specified variable in functionScope
-    func.functionScope[resultIndex] = * (uint32_t*) &result;
+    if (resultIndex >= 65535 - regSize)
+    {
+        *(float*)&registers[resultIndex - 65535] = result;
+    }
+    else
+    {
+        *(float*)&func.functionScope[resultIndex] = result;
+    }
 }
 
 uint32_t VM::GetValueAt(size_t offset) const

@@ -1,12 +1,6 @@
 int main()
 {
-    int a = 1324 / 14 * 34 + (34 * 3);
-    int b = 2;
-    return a;
-}
-
-int somewthing()
-{
-    int a = 40 * 20;
+    int a = 4;
+    int b = 2 + a;
     return a;
 }

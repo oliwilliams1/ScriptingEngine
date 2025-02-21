@@ -113,7 +113,7 @@ void Parser::CompileFuncBody(int& i)
 		}
 	}
 
-	std::map<std::string, std::pair<uint8_t, std::string>> variableMap;
+	std::map<std::string, std::pair<uint16_t, std::string>> variableMap;
 
 	int index = 0;
 
@@ -143,31 +143,31 @@ void Parser::CompileFuncBody(int& i)
 	for (const auto& pair : variableMap)
 	{
 		const std::string& varName = pair.first;
-		uint8_t varIndex = pair.second.first;
+		uint16_t varIndex = pair.second.first;
 		const std::string& varValue = pair.second.second;
 
 		bool containsAlphabetic = false;
-		for (char c : varValue) {
-			if (std::isalpha(c)) {
+		for (char c : varValue) 
+		{
+			if (std::isalpha(c)) 
+			{
 				containsAlphabetic = true;
 				break;
 			}
 		}
 
-		if (containsAlphabetic) {
-			std::cout << "varValue contains alphabetic characters." << std::endl;
-		}
-		else {
+		if (!containsAlphabetic)
+		{
 			float res = parseExpression(varValue);
 
 			if (currentType == Type::Int)
 			{
 				int ires = (int)res;
-				currentFunction.functionScope[varIndex] = *(uint32_t*) &ires;
+				currentFunction.functionScope[varIndex] = *(uint32_t*)&ires;
 			}
 			else // float
 			{
-				currentFunction.functionScope[varIndex] = *(uint32_t*) &res;
+				currentFunction.functionScope[varIndex] = *(uint32_t*)&res;
 			}
 		}
 	}
@@ -182,7 +182,7 @@ void Parser::CompileFuncBody(int& i)
 
 			variableName.erase(variableName.find_last_not_of(' ') + 1);
 
-			currentFunction.code.push_back((uint8_t)Inst::Return);
+			currentFunction.code.push_back((uint16_t)Inst::Return);
 
 			if (variableMap.find(variableName) != variableMap.end())
 			{

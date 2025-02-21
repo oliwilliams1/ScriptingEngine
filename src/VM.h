@@ -69,7 +69,8 @@ private:
     std::array<uint32_t, 16> memory = { 0 };
     size_t pc;
 
-    std::array<uint32_t, 16> registers = { 0 };
+    const static size_t regSize = 16;
+    std::array<uint32_t, regSize> registers = { 0 };
 
     void PerformIntArithmetic(Inst instruction, Function& func);
     void PerformFloatArithmetic(Inst instruction, Function& func);

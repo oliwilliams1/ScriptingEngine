@@ -1,5 +1,7 @@
 #include "VM.h"
 #include "Compiler.h"
+
+/*
 void addOtherFunc(VM& vm)
 {
     Function func;
@@ -30,20 +32,27 @@ int main()
 
     Function mainFunc;
     mainFunc.returnAddress = 0;
-    mainFunc.returnType = Type::Int;
+    mainFunc.returnType = Type::Float;
     mainFunc.funcAddress = 0;
 
     mainFunc.functionScope.resize(2); // remembner to resize
 
-    int var1 = 1;
-    int var2 = 6;
+    float var1 = 1;
+    float var2 = 6;
     mainFunc.functionScope[0] = *(uint32_t*) &var1;
     mainFunc.functionScope[1] = *(uint32_t*) &var2;
 
+    float num = -5;
+
+    uint32_t num_as_int = *(uint32_t*)&num;
+
+    uint16_t nump1 = (num_as_int >> 16) & 0xFFFF;
+    uint16_t nump2 = num_as_int & 0xFFFF;
+
     mainFunc.code = {
-        (uint16_t)Inst::CallFuncInt, 1, 0,
-        (uint16_t)Inst::AddInt, 0, 1, 0,
-        (uint16_t)Inst::SetRegister, 0, 0x0000, 0x0123,
+        // (uint16_t)Inst::CallFuncInt, 1, 0,
+        (uint16_t)Inst::SetRegister, 0, nump1, nump2,
+        (uint16_t)Inst::AddFloat, 0, 1, 0,
         (uint16_t)Inst::Return, 0,
         (uint16_t)Inst::Halt
     };
@@ -54,13 +63,13 @@ int main()
     std::cout << vm.GetDisassembly() << std::endl;
 
     uint32_t result = vm.GetValueAt(mainFunc.funcAddress);
-    std::cout << "main() result: " << * (int*) &result << std::endl;
+    std::cout << "main() result: " << * (float*) &result << std::endl;
 
     vm.DumpMemory();
     return 0;
 }
+*/
 
-/*
 int main()
 {
     Parser parser;
@@ -92,5 +101,3 @@ int main()
 
     return 0;
 }
-
-*/

@@ -23,7 +23,6 @@ public:
 private:
 	void CompileFuncBody(int& i);
 
-
 	// std::map<std::string, Function> functionsMap;
 
 	std::string currentExpression;
@@ -32,6 +31,8 @@ private:
 	Function currentFunction;
 	bool inFunc = false;
 	int latestFuncAddress = 0;
+
+	uint16_t resultRegister;
 
 	std::string lastToken;
 	std::string currentFileText;
