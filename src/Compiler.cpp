@@ -60,36 +60,14 @@ void Parser::Tokenize()
 	}
 }
 
-void Parser::CompileFuncBody(int& i)
+void Parser::trimLines(std::stringstream& ss, std::vector<std::string>& lines)
 {
-	std::stringstream stream;
-	int maxI = 0;
-
-	// temp, skip till first brace
-	i += 3;
-	while (true)
+	for (int j = 0; j < ss.str().length(); j++)
 	{
-		std::string token = tokens[i];
-		if (token == "}")
+		if (ss.str()[j] == ';')
 		{
-			maxI = i;
-			break;
-		}
-
-		stream << token << " ";
-		i++;
-	}
-
-	i = maxI + 1;
-
-	std::vector<std::string> lines;
-
-	for (int j = 0; j < stream.str().length(); j++)
-	{
-		if (stream.str()[j] == ';')
-		{
-			lines.push_back(stream.str().substr(0, j));
-			stream.str(stream.str().substr(j + 1));
+			lines.push_back(ss.str().substr(0, j));
+			ss.str(ss.str().substr(j + 1));
 			j = 0;
 		}
 	}
@@ -100,7 +78,10 @@ void Parser::CompileFuncBody(int& i)
 		lines[j] = lines[j].substr(lines[j].find_first_not_of(' '));
 		lines[j] = lines[j].substr(0, lines[j].find_last_not_of(' ') + 1);
 	}
+}
 
+void Parser::variableRealization(std::vector<std::string>& lines, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap)
+{
 	std::vector<std::string> variableDeclarations;
 
 	for (int j = 0; j < lines.size(); j++)
@@ -112,8 +93,6 @@ void Parser::CompileFuncBody(int& i)
 			variableDeclarations.push_back(line);
 		}
 	}
-
-	std::map<std::string, std::pair<uint16_t, std::string>> variableMap;
 
 	int index = 0;
 
@@ -134,29 +113,30 @@ void Parser::CompileFuncBody(int& i)
 		std::string variableValue = line.substr(valueStart, valueEnd - valueStart);
 		variableValue.erase(variableValue.find_last_not_of(' ') + 1);
 
-		variableMap[variableName] = { index, variableValue};
+		variableMap[variableName] = { index, variableValue };
 		index++;
 	}
 
 	currentFunction.functionScope.resize(variableMap.size());
 
+	// preset const variables
 	for (const auto& pair : variableMap)
 	{
 		const std::string& varName = pair.first;
 		uint16_t varIndex = pair.second.first;
 		const std::string& varValue = pair.second.second;
 
-		bool containsAlphabetic = false;
-		for (char c : varValue) 
+		bool containsAlpha = false;
+		for (char c : varValue)
 		{
-			if (std::isalpha(c)) 
+			if (std::isalpha(c))
 			{
-				containsAlphabetic = true;
+				containsAlpha = true;
 				break;
 			}
 		}
 
-		if (!containsAlphabetic)
+		if (!containsAlpha)
 		{
 			float res = parseExpression(varValue);
 
@@ -171,9 +151,49 @@ void Parser::CompileFuncBody(int& i)
 			}
 		}
 	}
+}
+
+void Parser::tokenizeFuncBody(std::stringstream& stream, int& i)
+{
+	int maxI = 0;
+
+	// temp, skip till first brace
+	i += 3;
+	while (true)
+	{
+		std::string token = tokens[i];
+		if (token == "}")
+		{
+			maxI = i;
+			break;
+		}
+
+		stream << token << " ";
+		i++;
+	}
+
+	i = maxI + 1;
+}
+
+void compileLine(const std::string& line, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap)
+{
+
+}
+
+void Parser::CompileFuncBody(int& i)
+{
+	std::stringstream stream;
+	tokenizeFuncBody(stream, i);
+
+	std::vector<std::string> lines;
+	trimLines(stream, lines);
+
+	std::unordered_map<std::string, std::pair<uint16_t, std::string>> variableMap;
+	variableRealization(lines, variableMap);
 
 	for (const std::string& line : lines)
 	{
+		// handle speical things
 		if (line.substr(0, 6) == "return")
 		{
 			std::string variableName = line.substr(6);
@@ -192,7 +212,11 @@ void Parser::CompileFuncBody(int& i)
 			{
 				std::cout << "unknown return variable name: " << variableName << std::endl;
 			}
+
+			break;
 		}
+
+		compileLine(line, variableMap);
 	}
 }
 
