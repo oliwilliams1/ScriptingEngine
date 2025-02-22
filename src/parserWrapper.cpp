@@ -16,5 +16,6 @@ float parseExpression(const std::string& expression)
 	else
 	{
 		std::cerr << "Error: " << parser.error() << std::endl;
+		return 0;
 	}
 }

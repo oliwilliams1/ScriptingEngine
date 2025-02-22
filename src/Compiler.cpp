@@ -136,73 +136,80 @@ void Compiler::variableRealization(std::vector<std::string>& lines)
 {
 	std::vector<std::string> variableDeclarations;
 
-	for (int j = 0; j < lines.size(); j++)
-	{
-		std::string& line = lines[j];
+    for (int j = 0; j < lines.size(); j++)
+    {
+        std::string& line = lines[j];
 
-		if (line.find("int") != std::string::npos || line.find("float") != std::string::npos)
-		{
-			variableDeclarations.push_back(line);
-		}
-	}
+        if (line.find("int") != std::string::npos || line.find("float") != std::string::npos)
+        {
+            variableDeclarations.push_back(line);
+        }
+    }
 
-	int index = 0;
+    int index = 0;
 
-	for (int j = 0; j < variableDeclarations.size(); j++)
-	{
-		std::string& line = variableDeclarations[j];
+    for (int j = 0; j < variableDeclarations.size(); j++)
+    {
+        std::string& line = variableDeclarations[j];
 
-		size_t varNameStart = line.find(' ') + 1;
-		size_t varNameEnd = line.find('=', varNameStart);
+        size_t varNameStart = line.find(' ') + 1;
+        size_t varNameEnd = line.find('=', varNameStart);
 
-		std::string variableName = line.substr(varNameStart, varNameEnd - varNameStart);
-		variableName.erase(variableName.find_last_not_of(' ') + 1);
-		variableName.erase(0, variableName.find_first_not_of(' '));
+        std::string variableName = line.substr(varNameStart, varNameEnd - varNameStart);
+        variableName.erase(variableName.find_last_not_of(' ') + 1);
+        variableName.erase(0, variableName.find_first_not_of(' '));
 
+        size_t valueStart = line.find('=', varNameEnd) + 1;
+        size_t valueEnd = line.find(';', valueStart);
+        std::string variableValue = line.substr(valueStart, valueEnd - valueStart);
+        variableValue.erase(variableValue.find_last_not_of(' ') + 1);
 
-		size_t valueStart = line.find('=', varNameEnd) + 1;
-		size_t valueEnd = line.find(';', valueStart);
-		std::string variableValue = line.substr(valueStart, valueEnd - valueStart);
-		variableValue.erase(variableValue.find_last_not_of(' ') + 1);
+        Type variableType;
+        if (line.find("int") != std::string::npos) {
+            variableType = Type::Int;
+        } else if (line.find("float") != std::string::npos) {
+            variableType = Type::Float;
+        }
 
-		variableMap[variableName] = { index, variableValue };
-		index++;
-	}
+        variableMap[variableName] = { static_cast<uint16_t>(index), variableValue, variableType };
+        index++;
+    }
 
-	currentFunction.functionScope.resize(variableMap.size());
+    currentFunction.functionScope.resize(variableMap.size());
 
-	// preset const variables
-	for (const auto& pair : variableMap)
-	{
-		const std::string& varName = pair.first;
-		uint16_t varIndex = pair.second.first;
-		const std::string& varValue = pair.second.second;
+    // preset const variables
+    for (const auto& pair : variableMap)
+    {
+        const std::string& varName = pair.first;
+        const VariableInfo& varInfo = pair.second;
+        uint16_t varIndex = varInfo.index;
+        const std::string& varValue = varInfo.value;
+        Type variableType = varInfo.variableType;
 
-		bool containsAlpha = false;
-		for (char c : varValue)
-		{
-			if (std::isalpha(c))
-			{
-				containsAlpha = true;
-				break;
-			}
-		}
+        bool containsAlpha = false;
+        for (char c : varValue)
+        {
+            if (std::isalpha(c))
+            {
+                containsAlpha = true;
+                break;
+            }
+        }
 
-		if (!containsAlpha)
-		{
-			float res = parseExpression(varValue);
-
-			if (currentExpressionType == Type::Int)
-			{
-				int ires = (int)res;
-				currentFunction.functionScope[varIndex] = *(uint32_t*)&ires;
-			}
-			else // float
-			{
-				currentFunction.functionScope[varIndex] = *(uint32_t*)&res;
-			}
-		}
-	}
+        if (!containsAlpha)
+        {
+            if (variableType == Type::Int)
+            {
+                int res = parseExpression(varValue);
+                currentFunction.functionScope[varIndex] = *(uint32_t*)&res;
+            }
+            else // float
+            {
+                float res = parseExpression(varValue);
+                currentFunction.functionScope[varIndex] = *(uint32_t*)&res;
+            }
+        }
+    }
 }
 
 void Compiler::tokenizeFuncBody(std::stringstream& stream, int& i)
@@ -301,7 +308,7 @@ std::vector<std::string> Compiler::preProcessExpression(std::string& exp)
 				exit(1);
 			}
 
-			uint16_t varIndex = variableMap[varName].first;
+			uint16_t varIndex = variableMap[varName].index;
 			token = "$" + std::to_string(varIndex);
 		}
 	}
@@ -411,7 +418,7 @@ void Compiler::compileFuncBody(int& i)
 
 			if (variableMap.find(variableName) != variableMap.end())
 			{
-				currentFunction.code.push_back(variableMap[variableName].first);
+				currentFunction.code.push_back(variableMap[variableName].index);
 			} 
 			else
 			{

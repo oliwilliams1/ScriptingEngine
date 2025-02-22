@@ -7,13 +7,13 @@
 #include <string>
 #include <sstream>
 
-enum class Type
+enum class Type : uint16_t
 {
     Int = 0,
     Float = 1
 };
 
-enum class Inst
+enum class Inst : uint16_t
 {
     AddInt = 0x0000,
     SubInt = 0x0001,

@@ -58,39 +58,39 @@ void VM::RunFunction(size_t funcIndex)
 
     while (pc < code.size())
     {
-        uint16_t instruction = code[pc++];
-        switch (static_cast<Inst>(instruction))
+        Inst instruction = (Inst)code[pc++];
+        switch (instruction)
         {
         case Inst::AddInt:
-            PerformIntArithmetic(static_cast<Inst>(instruction), func);
+            PerformIntArithmetic(instruction, func);
             break;
 
         case Inst::SubInt:
-            PerformIntArithmetic(static_cast<Inst>(instruction), func);
+            PerformIntArithmetic(instruction, func);
             break;
 
         case Inst::MulInt:
-            PerformIntArithmetic(static_cast<Inst>(instruction), func);
+            PerformIntArithmetic(instruction, func);
             break;
 
         case Inst::DivInt:
-            PerformIntArithmetic(static_cast<Inst>(instruction), func);
+            PerformIntArithmetic(instruction, func);
             break;
 
         case Inst::AddFloat:
-            PerformFloatArithmetic(static_cast<Inst>(instruction), func);
+            PerformFloatArithmetic(instruction, func);
             break;
 
         case Inst::SubFloat:
-            PerformFloatArithmetic(static_cast<Inst>(instruction), func);
+            PerformFloatArithmetic(instruction, func);
             break;
 
         case Inst::MulFloat:
-            PerformFloatArithmetic(static_cast<Inst>(instruction), func);
+            PerformFloatArithmetic(instruction, func);
             break;
 
         case Inst::DivFloat:
-            PerformFloatArithmetic(static_cast<Inst>(instruction), func);
+            PerformFloatArithmetic(instruction, func);
             break;
 
         case Inst::CallFuncInt:
@@ -125,9 +125,9 @@ void VM::RunFunction(size_t funcIndex)
             uint16_t regAddress = func.code[pc++];
             uint16_t p1 = func.code[pc++];
             uint16_t p2 = func.code[pc++];            
-
-            registers[regAddress] = ((uint32_t)p1 << 16) | (uint32_t)p2;
-			break;
+            
+            registers[regAddress] = ((uint32_t)p1 << 16) | p2;
+            break;
         }
 
         case Inst::Return:
@@ -161,7 +161,7 @@ void VM::PerformIntArithmetic(Inst instruction, Function& func)
     }
     else
     {
-        a = static_cast<uint32_t>(func.functionScope[varIndexA]);
+        a = func.functionScope[varIndexA];
     }
 
     if (varIndexB >= 65535 - regSize)
@@ -170,7 +170,7 @@ void VM::PerformIntArithmetic(Inst instruction, Function& func)
     }
     else
     {
-        b = static_cast<uint32_t>(func.functionScope[varIndexB]);
+        b = func.functionScope[varIndexB];
     }
 
     int32_t result = 0;
@@ -200,11 +200,11 @@ void VM::PerformIntArithmetic(Inst instruction, Function& func)
 
     if (resultIndex >= 65535 - regSize)
     {
-        registers[resultIndex - 65535] = static_cast<uint32_t>(result);
+        registers[resultIndex - 65535] = (uint32_t)result;
     }
     else
     {
-        func.functionScope[resultIndex] = static_cast<uint32_t>(result);
+        func.functionScope[resultIndex] = (uint32_t)result;
     }
 }
 
@@ -262,17 +262,17 @@ void VM::PerformFloatArithmetic(Inst instruction, Function& func)
 
     if (resultIndex >= 65535 - regSize)
     {
-        *(float*)&registers[resultIndex - 65535] = result;
+        *(float*)&registers[resultIndex - 65535] = (uint32_t)result;
     }
     else
     {
-        *(float*)&func.functionScope[resultIndex] = result;
+        *(float*)&func.functionScope[resultIndex] = (uint32_t)result;
     }
 }
 
 uint32_t VM::GetValueAt(size_t offset) const
 {
-    return static_cast<uint32_t>(memory[offset]);
+    return memory[offset];
 }
 
 std::string VM::GetDisassembly()

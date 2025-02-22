@@ -9,6 +9,43 @@
 #include <unordered_map>
 #include "VM.h"
 
+// chargpt
+struct VariableInfo {
+    uint16_t index;
+    std::string value;
+    Type variableType;
+
+    VariableInfo() : index(0), value(""), variableType(Type::Int) {}
+
+    VariableInfo(uint16_t idx, const std::string& val, Type type)
+        : index(idx), value(val), variableType(type) {}
+
+    VariableInfo& operator=(const VariableInfo& other) {
+        if (this != &other) {
+            index = other.index;
+            value = other.value;
+            variableType = other.variableType;
+        }
+        return *this;
+    }
+
+    VariableInfo& operator=(VariableInfo&& other) noexcept {
+        if (this != &other) {
+            index = other.index;
+            value = std::move(other.value);
+            variableType = other.variableType;
+        }
+        return *this;
+    }
+
+    VariableInfo(const VariableInfo& other)
+        : index(other.index), value(other.value), variableType(other.variableType) {}
+
+    VariableInfo(VariableInfo&& other) noexcept
+        : index(other.index), value(std::move(other.value)), variableType(other.variableType) {}
+};
+
+
 class Compiler
 {
 public:
@@ -38,7 +75,7 @@ private:
 	std::string currentFileText;
 	std::vector<std::string> tokens;
 
-	std::unordered_map<std::string, std::pair<uint16_t, std::string>> variableMap;
+	std::unordered_map<std::string, VariableInfo> variableMap;
 
 	std::string addCharsUpToComment(const std::string& line);
 	void trimLines(std::stringstream& ss, std::vector<std::string>& lines);
