@@ -72,15 +72,15 @@ int main()
 
 int main()
 {
-    Parser parser;
+    Compiler compiler;
 
-    parser.CleanUpFile("../playtime/script.sbscript");
-    parser.Tokenize();
-	parser.Compile();
+    compiler.CleanUpFile("../playtime/script.sbscript");
+    compiler.Tokenize();
+	compiler.Compile();
 
     VM vm;
 
-    for (const Function& func : parser.functions)
+    for (const Function& func : compiler.functions)
     {
         vm.LoadFunction(func);
     }
@@ -97,7 +97,6 @@ int main()
     {
         std::cout << "main() result: " << *(float*)&result << std::endl;
     }
-
 
     return 0;
 }

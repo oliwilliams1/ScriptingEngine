@@ -1,7 +1,17 @@
 #include "Compiler.h"
 #include "parserWrapper.h"
 
-void Parser::CleanUpFile(const std::string& path)
+std::string Compiler::addCharsUpToComment(const std::string& line)
+{
+	size_t commentPos = line.find("//");
+	if (commentPos != std::string::npos) 
+	{
+		return line.substr(0, commentPos);
+	}
+	return line;
+}
+
+void Compiler::CleanUpFile(const std::string& path)
 {
 	std::ifstream file(path);
 	std::string line, res;
@@ -12,7 +22,7 @@ void Parser::CleanUpFile(const std::string& path)
 	}
 
 	while (std::getline(file, line)) {
-		res += line;
+		res += addCharsUpToComment(line);
 	}
 	
 	file.close();
@@ -49,7 +59,7 @@ void Parser::CleanUpFile(const std::string& path)
 	currentFileText = clean2.str();
 }
 
-void Parser::Tokenize()
+void Compiler::Tokenize()
 {
 	std::istringstream stream(currentFileText);
 	std::string token;
@@ -60,7 +70,7 @@ void Parser::Tokenize()
 	}
 }
 
-void Parser::trimLines(std::stringstream& ss, std::vector<std::string>& lines)
+void Compiler::trimLines(std::stringstream& ss, std::vector<std::string>& lines)
 {
 	for (int j = 0; j < ss.str().length(); j++)
 	{
@@ -80,13 +90,13 @@ void Parser::trimLines(std::stringstream& ss, std::vector<std::string>& lines)
 	}
 }
 
-void Parser::stripString(std::string& str)
+void Compiler::stripString(std::string& str)
 {
 	str.erase(str.find_last_not_of(' ') + 1);
 	str.erase(0, str.find_first_not_of(' '));
 }
 
-void Parser::removeVariableType(std::string& str)
+void Compiler::removeVariableType(std::string& str)
 {
 	std::string types[] = { "int", "float" };
 
@@ -100,7 +110,7 @@ void Parser::removeVariableType(std::string& str)
 	}
 }
 
-void Parser::padOperators(std::string& input)
+void Compiler::padOperators(std::string& input)
 {
 	std::vector<std::string> operators = { "+", "-", "*", "/", "(", ")" };
 
@@ -122,7 +132,7 @@ void Parser::padOperators(std::string& input)
 	stripString(input);
 }
 
-void Parser::variableRealization(std::vector<std::string>& lines)
+void Compiler::variableRealization(std::vector<std::string>& lines)
 {
 	std::vector<std::string> variableDeclarations;
 
@@ -182,7 +192,7 @@ void Parser::variableRealization(std::vector<std::string>& lines)
 		{
 			float res = parseExpression(varValue);
 
-			if (currentType == Type::Int)
+			if (currentExpressionType == Type::Int)
 			{
 				int ires = (int)res;
 				currentFunction.functionScope[varIndex] = *(uint32_t*)&ires;
@@ -195,7 +205,7 @@ void Parser::variableRealization(std::vector<std::string>& lines)
 	}
 }
 
-void Parser::tokenizeFuncBody(std::stringstream& stream, int& i)
+void Compiler::tokenizeFuncBody(std::stringstream& stream, int& i)
 {
 	int maxI = 0;
 
@@ -217,7 +227,7 @@ void Parser::tokenizeFuncBody(std::stringstream& stream, int& i)
 	i = maxI + 1;
 }
 
-void Parser::evaluateExpression(std::string& exp)
+std::vector<std::string> Compiler::preProcessExpression(std::string& exp)
 {
 	std::string expression = exp;
 	padOperators(expression);
@@ -236,7 +246,7 @@ void Parser::evaluateExpression(std::string& exp)
 
 	for (std::string& token : tokens)
 	{
-		std::cout << token << " ";
+		// std::cout << token << " ";
 		bool isVar = false;
 
 		if (std::find(operators.begin(), operators.end(), token) != operators.end())
@@ -256,7 +266,7 @@ void Parser::evaluateExpression(std::string& exp)
 		if (!isVar) // token is a constant, upload to reg
 		{
 			uint32_t value;
-			if (currentType == Type::Int)
+			if (currentExpressionType == Type::Int)
 			{
 				int res = std::stoi(token);
 				value = *(uint32_t*)&res;
@@ -266,6 +276,7 @@ void Parser::evaluateExpression(std::string& exp)
 				float res = std::stof(token);
 				value = *(uint32_t*)&res;
 			}
+			std::cout << value << std::endl;
 
 			uint16_t reg = minRegister++;
 			uint16_t part1 = (value >> 16) & 0xFFFF;
@@ -276,7 +287,7 @@ void Parser::evaluateExpression(std::string& exp)
 			currentFunction.code.push_back(part1);
 			currentFunction.code.push_back(part2);
 
-			token = "$r" + std::to_string(reg);
+			token = "$" + std::to_string((uint16_t)65535 - reg);
 		}
 		else // token is a variable
 		{
@@ -286,27 +297,31 @@ void Parser::evaluateExpression(std::string& exp)
 
 			if (variableMap.find(varName) == variableMap.end())
 			{
-				std::cout << "Variable not found: " << varName << std::endl;
-				return;
+				std::cout << "Variable not found: " << varName << " line: " << __LINE__ << std::endl;
+				exit(1);
 			}
 
 			uint16_t varIndex = variableMap[varName].first;
-			token = "$v" + std::to_string(varIndex);
+			token = "$" + std::to_string(varIndex);
 		}
 	}
 
-	std::cout << " => ";
+	/*std::cout << " => ";
 
 	for (const std::string& token : tokens)
 	{
 		std::cout << token << " ";
-	}
+	}*/
 
-	std::cout << std::endl;
-	std::cout << std::endl;
+	return tokens;
 }
 
-void Parser::compileLine(const std::string& line)
+void Compiler::evaluateExpression(std::string& exp)
+{
+	std::vector<std::string> tokens = preProcessExpression(exp);
+}
+
+void Compiler::compileLine(const std::string& line)
 {
 	if (line.find('=') == std::string::npos)
 	{
@@ -315,6 +330,19 @@ void Parser::compileLine(const std::string& line)
 	}
 
 	std::string LHS = line.substr(0, line.find('='));
+	
+	if (LHS.substr(0, 3) == "int")
+	{
+		currentExpressionType = Type::Int;
+	}
+	else if (LHS.substr(0, 5) == "float")
+	{
+		currentExpressionType = Type::Float;
+	}
+	else
+	{
+		std::cout << "boiy what kinda line are you tryna compiole?!, no expression type found on line: " << line << "error on compliler line:" << __LINE__ << std::endl;
+	}
 	removeVariableType(LHS);
 	stripString(LHS);
 
@@ -325,11 +353,38 @@ void Parser::compileLine(const std::string& line)
 	}
 
 	std::string RHS = line.substr(line.find('=') + 1);
+
+	bool containsVar = false;
+	for (const char& c : RHS)
+	{
+		if (std::isalpha(c))
+		{
+			std::vector<char> operators = { '+', '-', '*', '/', '(', ')' };
+			
+			bool isOp = false;
+			for (const char& op : operators)
+			{
+				if (c == op)
+				{
+					isOp = true;
+				}
+			}
+			
+			if (isOp == false)
+			{
+				containsVar = true;
+				break;
+			}
+		}
+	}
 	
-	evaluateExpression(RHS);
+	if (containsVar)
+	{
+		evaluateExpression(RHS);
+	}
 }
 
-void Parser::compileFuncBody(int& i)
+void Compiler::compileFuncBody(int& i)
 {
 	std::stringstream stream;
 	tokenizeFuncBody(stream, i);
@@ -370,19 +425,19 @@ void Parser::compileFuncBody(int& i)
 	}
 }
 
-void Parser::Compile()
+void Compiler::Compile()
 {
 	for (int i = 0; i < tokens.size(); i++)
 	{
 		std::string& token = tokens[i];
 
-		if (token == "int") currentType = Type::Int;
-		if (token == "float") currentType = Type::Float;
+		if (token == "int") currentFuncType = Type::Int;
+		if (token == "float") currentFuncType = Type::Float;
 
 		if (token == "(" && lastToken != "if" && lastToken != "while")
 		{
 			// must be func
-			currentFunction.returnType = currentType;
+			currentFunction.returnType = currentFuncType;
 			if (lastToken == "main")
 			{
 				currentFunction.returnAddress = 0;

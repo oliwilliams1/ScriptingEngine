@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include "VM.h"
 
-class Parser
+class Compiler
 {
 public:
 	void CleanUpFile(const std::string& path);
@@ -24,8 +24,9 @@ private:
 	// std::unoredered_+map<std::string, Function> functionsMap;
 
 	std::string currentExpression;
+	Type currentExpressionType;
 
-	Type currentType;
+	Type currentFuncType;
 	Function currentFunction;
 	bool inFunc = false;
 	int latestFuncAddress = 0;
@@ -39,12 +40,14 @@ private:
 
 	std::unordered_map<std::string, std::pair<uint16_t, std::string>> variableMap;
 
+	std::string addCharsUpToComment(const std::string& line);
 	void trimLines(std::stringstream& ss, std::vector<std::string>& lines);
 	void variableRealization(std::vector<std::string>& lines);
 	void tokenizeFuncBody(std::stringstream& stream, int& i);
 	void compileLine(const std::string& line);
 	void stripString(std::string& str);
 	void removeVariableType(std::string& str);
+	std::vector<std::string> preProcessExpression(std::string& exp);
 	void evaluateExpression(std::string& exp);
 	void padOperators(std::string& input);
 };

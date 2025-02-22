@@ -290,12 +290,18 @@ std::string VM::GetDisassembly()
 
         ss << "\n  Variables:\n";
         ss << "    Variable Count: " << function.functionScope.size() << "\n";
+        ss << "           int        | float\n";
+
         for (size_t varIndex = 0; varIndex < function.functionScope.size(); ++varIndex)
         {
             uint32_t value = function.functionScope[varIndex];
 
             ss << "    Var " << varIndex << ": ";
-            ss << value << std::endl;
+            ss << std::setw(10) << std::setfill(' ')
+                << *(int*)&value << " | ";
+
+            ss << std::setw(15) << std::setfill(' ')
+                << *(float*)&value << std::endl;
         }
 
         ss << "\n  Code:\n";
