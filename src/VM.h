@@ -1,4 +1,4 @@
-#pragma once
+    #pragma once
 
 #include <vector>
 #include <cstdint>
@@ -72,7 +72,7 @@ private:
     const static size_t regSize = 32;
     std::array<uint32_t, regSize> registers = { 0 };
 
-    void PerformIntArithmetic(Inst instruction, Function& func);
-    void PerformFloatArithmetic(Inst instruction, Function& func);
+    inline void PerformIntArithmetic(Inst instruction, Function& func);
+    inline void PerformFloatArithmetic(Inst instruction, Function& func);
     std::string PrintOperands(const Function& func, size_t& instIndex, size_t operandsCount);
 };

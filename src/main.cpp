@@ -1,5 +1,6 @@
 #include "VM.h"
 #include "Compiler.h"
+#include <chrono>
 
 /*
 void addOtherFunc(VM& vm)
@@ -86,7 +87,18 @@ int main()
     }
     
     std::cout << vm.GetDisassembly() << std::endl;
-    vm.RunFunction(0);
+
+    // start time
+	auto start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 10000000; i++)
+    {
+        vm.RunFunction(0);
+    }
+
+    // end time
+	auto end = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "Time taken: " << duration.count() << " ms" << std::endl;
 
     uint32_t result = vm.GetValueAt(0);
     if (vm.functions[0].returnType == Type::Int)
