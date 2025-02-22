@@ -97,10 +97,32 @@ void Parser::removeVariableType(std::string& str)
 		{
 			str.erase(pos, type.length());
 		}
-	}	
+	}
 }
 
-void Parser::variableRealization(std::vector<std::string>& lines, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap)
+void Parser::padOperators(std::string& input)
+{
+	std::vector<std::string> operators = { "+", "-", "*", "/", "(", ")" };
+
+	for (const auto& op : operators)
+	{
+		std::string replacement = " " + op + " ";
+		size_t pos = 0;
+
+		while ((pos = input.find(op, pos)) != std::string::npos) {
+			input.replace(pos, op.length(), replacement);
+			pos += replacement.length();
+		}
+	}
+
+	input.erase(std::unique(input.begin(), input.end(), [](char a, char b) {
+		return a == ' ' && b == ' ';
+		}), input.end());
+
+	stripString(input);
+}
+
+void Parser::variableRealization(std::vector<std::string>& lines)
 {
 	std::vector<std::string> variableDeclarations;
 
@@ -195,12 +217,96 @@ void Parser::tokenizeFuncBody(std::stringstream& stream, int& i)
 	i = maxI + 1;
 }
 
-void Parser::evaluateExpression(std::string& expression, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap)
+void Parser::evaluateExpression(std::string& exp)
 {
-	std::cout << "not implemented, line: " << __LINE__ << std::endl;
+	std::string expression = exp;
+	padOperators(expression);
+
+	// Split by ' '
+	std::vector<std::string> tokens;
+	std::stringstream stream(expression);
+	std::string token;
+
+	while (std::getline(stream, token, ' '))
+	{
+		tokens.push_back(token);
+	}
+
+	std::vector<std::string> operators = { "+", "-", "*", "/", "(", ")" };
+
+	for (std::string& token : tokens)
+	{
+		std::cout << token << " ";
+		bool isVar = false;
+
+		if (std::find(operators.begin(), operators.end(), token) != operators.end())
+		{
+			continue;
+		}
+
+		for (const char c : token)
+		{
+			if (std::isalpha(c))
+			{
+				isVar = true;
+				break;
+			}
+		}
+
+		if (!isVar) // token is a constant, upload to reg
+		{
+			uint32_t value;
+			if (currentType == Type::Int)
+			{
+				int res = std::stoi(token);
+				value = *(uint32_t*)&res;
+			}
+			else // float
+			{
+				float res = std::stof(token);
+				value = *(uint32_t*)&res;
+			}
+
+			uint16_t reg = minRegister++;
+			uint16_t part1 = (value >> 16) & 0xFFFF;
+			uint16_t part2 = value & 0xFFFF;
+
+			currentFunction.code.push_back((uint16_t)Inst::SetRegister);
+			currentFunction.code.push_back(reg);
+			currentFunction.code.push_back(part1);
+			currentFunction.code.push_back(part2);
+
+			token = "$r" + std::to_string(reg);
+		}
+		else // token is a variable
+		{
+			std::string varName = token;
+			varName.erase(varName.find_last_not_of(' ') + 1);
+			varName.erase(0, varName.find_first_not_of(' '));
+
+			if (variableMap.find(varName) == variableMap.end())
+			{
+				std::cout << "Variable not found: " << varName << std::endl;
+				return;
+			}
+
+			uint16_t varIndex = variableMap[varName].first;
+			token = "$v" + std::to_string(varIndex);
+		}
+	}
+
+	std::cout << " => ";
+
+	for (const std::string& token : tokens)
+	{
+		std::cout << token << " ";
+	}
+
+	std::cout << std::endl;
+	std::cout << std::endl;
 }
 
-void Parser::compileLine(const std::string& line, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap)
+void Parser::compileLine(const std::string& line)
 {
 	if (line.find('=') == std::string::npos)
 	{
@@ -220,10 +326,10 @@ void Parser::compileLine(const std::string& line, std::unordered_map<std::string
 
 	std::string RHS = line.substr(line.find('=') + 1);
 	
-	evaluateExpression(RHS, variableMap);
+	evaluateExpression(RHS);
 }
 
-void Parser::CompileFuncBody(int& i)
+void Parser::compileFuncBody(int& i)
 {
 	std::stringstream stream;
 	tokenizeFuncBody(stream, i);
@@ -231,9 +337,10 @@ void Parser::CompileFuncBody(int& i)
 	std::vector<std::string> lines;
 	trimLines(stream, lines);
 
-	std::unordered_map<std::string, std::pair<uint16_t, std::string>> variableMap;
-	variableRealization(lines, variableMap);
+	variableMap.clear();
+	variableRealization(lines);
 
+	minRegister = 0;
 	for (const std::string& line : lines)
 	{
 		// handle speical things
@@ -259,7 +366,7 @@ void Parser::CompileFuncBody(int& i)
 			break;
 		}
 
-		compileLine(line, variableMap);
+		compileLine(line);
 	}
 }
 
@@ -289,7 +396,7 @@ void Parser::Compile()
 				latestFuncAddress++;
 			}
 
-			CompileFuncBody(i);
+			compileFuncBody(i);
 			functions.push_back(currentFunction);
 			currentFunction = Function();
 			inFunc = false;

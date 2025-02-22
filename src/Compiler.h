@@ -19,7 +19,7 @@ public:
 
 	std::vector<Function> functions;
 private:
-	void CompileFuncBody(int& i);
+	void compileFuncBody(int& i);
 
 	// std::unoredered_+map<std::string, Function> functionsMap;
 
@@ -31,16 +31,20 @@ private:
 	int latestFuncAddress = 0;
 
 	uint16_t resultRegister;
+	uint16_t minRegister;
 
 	std::string lastToken;
 	std::string currentFileText;
 	std::vector<std::string> tokens;
 
+	std::unordered_map<std::string, std::pair<uint16_t, std::string>> variableMap;
+
 	void trimLines(std::stringstream& ss, std::vector<std::string>& lines);
-	void variableRealization(std::vector<std::string>& lines, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap);
+	void variableRealization(std::vector<std::string>& lines);
 	void tokenizeFuncBody(std::stringstream& stream, int& i);
-	void compileLine(const std::string& line, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap);
+	void compileLine(const std::string& line);
 	void stripString(std::string& str);
 	void removeVariableType(std::string& str);
-	void evaluateExpression(std::string& expression, std::unordered_map<std::string, std::pair<uint16_t, std::string>>& variableMap);
+	void evaluateExpression(std::string& exp);
+	void padOperators(std::string& input);
 };

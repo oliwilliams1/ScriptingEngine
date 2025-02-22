@@ -66,10 +66,10 @@ public:
 
 private:
     size_t memUsed = 0;
-    std::array<uint32_t, 16> memory = { 0 };
+    std::array<uint32_t, 32> memory = { 0 };
     size_t pc;
 
-    const static size_t regSize = 16;
+    const static size_t regSize = 32;
     std::array<uint32_t, regSize> registers = { 0 };
 
     void PerformIntArithmetic(Inst instruction, Function& func);
