@@ -1,114 +1,78 @@
-#include "VM.h"
-#include "Compiler.h"
-#include <chrono>
+#include <iostream>
+#include "angelscript.h"
+#include "scriptstdstring.h"
+#include "scriptbuilder.h"
+#include <cassert>
 
-/*
-void addOtherFunc(VM& vm)
+// Message callback function
+void MessageCallback(const asSMessageInfo* msg)
 {
-    Function func;
-    func.returnAddress = 1;
-    func.returnType = Type::Int;
-    func.funcAddress = 1;
+    switch (msg->type)
+    {
+    case asMSGTYPE_ERROR:
+        std::cerr << "ERROR: ";
+        break;
+    case asMSGTYPE_WARNING:
+        std::cerr << "WARNING: ";
+        break;
+    case asMSGTYPE_INFORMATION:
+        std::cerr << "INFO: ";
+        break;
+    }
+    std::cerr << msg->section << "(" << msg->row << ", " << msg->col << "): " << msg->message << std::endl;
+}
 
-	func.functionScope.resize(2);
-    int var1 = 2;
-    int var2 = 3;
-
-    func.functionScope[0] = *(uint32_t*) &var1;
-	func.functionScope[1] = *(uint32_t*) &var2;
-
-    func.code = {
-        (uint16_t)Inst::AddInt, 0, 1, 0,
-        (uint16_t)Inst::Return, 0
-    };
-
-    vm.LoadFunction(func);
+// Print function
+void print(const std::string& text)
+{
+    std::cout << text << std::endl;
 }
 
 int main()
 {
-    VM vm;
+    asIScriptEngine* engine = asCreateScriptEngine();
 
-    addOtherFunc(vm);
+    // Set the message callback
+    int r = engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+    assert(r >= 0);
 
-    Function mainFunc;
-    mainFunc.returnAddress = 0;
-    mainFunc.returnType = Type::Float;
-    mainFunc.funcAddress = 0;
+    // Register the standard string type
+    RegisterStdString(engine);
 
-    mainFunc.functionScope.resize(2); // remembner to resize
+    // Register the print function
+    r = engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL);
+    assert(r >= 0);
 
-    float var1 = 1;
-    float var2 = 6;
-    mainFunc.functionScope[0] = *(uint32_t*) &var1;
-    mainFunc.functionScope[1] = *(uint32_t*) &var2;
+    // Create a script to execute
+    const char* script = R"(
+        void main() {
+            print("Hello from AngelScript!");
+        }
+    )";
 
-    float num = -5;
+    // Compile the script
+    asIScriptModule* mod = engine->GetModule("MyModule", asGM_ALWAYS_CREATE);
+    r = mod->AddScriptSection("HelloWorld", script);
+    assert(r >= 0);
 
-    uint32_t num_as_int = *(uint32_t*)&num;
+    // Build the script to generate bytecode
+    r = mod->Build();
+    assert(r >= 0);
 
-    uint16_t nump1 = (num_as_int >> 16) & 0xFFFF;
-    uint16_t nump2 = num_as_int & 0xFFFF;
+    // Get the function that we want to call
+    asIScriptFunction* func = mod->GetFunctionByDecl("void main()");
+    assert(func != nullptr);
 
-    mainFunc.code = {
-        // (uint16_t)Inst::CallFuncInt, 1, 0,
-        (uint16_t)Inst::SetRegister, 0, nump1, nump2,
-        (uint16_t)Inst::AddFloat, 0, 1, 0,
-        (uint16_t)Inst::Return, 0,
-        (uint16_t)Inst::Halt
-    };
+    // Execute the script
+    asIScriptContext* ctx = engine->CreateContext();
+    r = ctx->Prepare(func);
+    assert(r >= 0);
+    r = ctx->Execute();
+    assert(r >= 0);
 
-    vm.LoadFunction(mainFunc);
-    vm.RunFunction(mainFunc.funcAddress);
-
-    std::cout << vm.GetDisassembly() << std::endl;
-
-    uint32_t result = vm.GetValueAt(mainFunc.funcAddress);
-    std::cout << "main() result: " << * (float*) &result << std::endl;
-
-    vm.DumpMemory();
-    return 0;
-}
-*/
-
-int main()
-{
-    Compiler compiler;
-
-    compiler.CleanUpFile("../playtime/script.sbscript");
-    compiler.Tokenize();
-	compiler.Compile();
-
-    VM vm;
-
-    for (const Function& func : compiler.functions)
-    {
-        vm.LoadFunction(func);
-    }
-    
-    std::cout << vm.GetDisassembly() << std::endl;
-
-    // start time
-	auto start = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 10000000; i++)
-    {
-        vm.RunFunction(0);
-    }
-
-    // end time
-	auto end = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	std::cout << "Time taken: " << duration.count() << " ms" << std::endl;
-
-    uint32_t result = vm.GetValueAt(0);
-    if (vm.functions[0].returnType == Type::Int)
-    {
-        std::cout << "main() result: " << *(int*)&result << std::endl;
-    }
-    else
-    {
-        std::cout << "main() result: " << *(float*)&result << std::endl;
-    }
+    // Clean up
+    ctx->Release();
+    engine->ShutDownAndRelease();
 
     return 0;
 }
