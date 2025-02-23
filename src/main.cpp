@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include "angelscript.h"
 #include "scriptstdstring.h"
 #include "scriptbuilder.h"
@@ -46,7 +47,11 @@ int main()
     // Create a script to execute
     const char* script = R"(
         void main() {
-            print("Hello from AngelScript!");
+            float x = 1;
+            for (int i = 0; i < 1000; i++)
+            {
+                x = x * 1.1;
+            }
         }
     )";
 
@@ -67,8 +72,17 @@ int main()
     asIScriptContext* ctx = engine->CreateContext();
     r = ctx->Prepare(func);
     assert(r >= 0);
+
+    // Measure execution time
+    auto start = std::chrono::high_resolution_clock::now();
     r = ctx->Execute();
     assert(r >= 0);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> execTime = end - start;
+
+    // Output the execution time
+    std::cout << "Execution time: " << execTime.count() << " ms" << std::endl;
 
     // Clean up
     ctx->Release();
